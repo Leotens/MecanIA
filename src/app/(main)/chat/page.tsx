@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, Plus, Send, Upload, CheckCircle, AlertTriangle, MessageSquarePlus } from "lucide-react";
+import { Bot, Plus, Send, Upload, CheckCircle, AlertTriangle, MessageSquarePlus, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { chatbotAssistance, ChatbotAssistanceInput } from "@/ai/flows/chatbot-assistance";
 
 type Message = {
   role: "user" | "assistant";
@@ -29,21 +30,44 @@ const relatedChats = [
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() === "") return;
-    const newMessages: Message[] = [...messages, { role: "user", content: input }];
+
+    const userMessage: Message = { role: "user", content: input };
+    const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
-    
-    // Simulate AI response
-    setTimeout(() => {
+    setIsLoading(true);
+
+    try {
+      const chatHistory = newMessages.slice(0, -1).map(msg => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      const assistanceInput: ChatbotAssistanceInput = {
+        userQuery: input,
+        chatHistory: chatHistory,
+      };
+
+      const result = await chatbotAssistance(assistanceInput);
+      
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Analizando... Por favor, dame un momento para procesar la información." },
+        { role: "assistant", content: result.response },
       ]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo." },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -109,6 +133,19 @@ export default function ChatPage() {
                     )}
                   </div>
                 ))}
+                 {isLoading && (
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-9 w-9 border bg-background">
+                      <AvatarFallback><Bot className="h-5 w-5 text-primary"/></AvatarFallback>
+                    </Avatar>
+                    <div className="rounded-xl p-3 max-w-[80%] bg-secondary">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <p className="text-sm">Analizando...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </CardContent>
@@ -126,12 +163,13 @@ export default function ChatPage() {
                 }}
                 className="pr-24 py-3"
                 rows={1}
+                disabled={isLoading}
               />
               <div className="absolute top-1/2 right-2 -translate-y-1/2 flex items-center gap-1">
-                 <Button variant="ghost" size="icon">
+                 <Button variant="ghost" size="icon" disabled={isLoading}>
                     <Plus className="h-5 w-5" />
                  </Button>
-                <Button onClick={handleSend} size="icon">
+                <Button onClick={handleSend} size="icon" disabled={isLoading}>
                   <Send className="h-5 w-5" />
                 </Button>
               </div>
@@ -169,4 +207,3 @@ export default function ChatPage() {
       </div>
     </div>
   );
-}
