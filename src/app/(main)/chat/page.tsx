@@ -43,14 +43,14 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const chatHistory = newMessages.slice(0, -1).map(msg => ({
-        role: msg.role,
+      const chatHistoryForApi = newMessages.slice(0, -1).map(msg => ({
+        role: msg.role as 'user' | 'assistant',
         content: msg.content,
       }));
 
       const assistanceInput: ChatbotAssistanceInput = {
         userQuery: input,
-        chatHistory: chatHistory,
+        chatHistory: chatHistoryForApi,
       };
 
       const result = await chatbotAssistance(assistanceInput);
@@ -207,3 +207,4 @@ export default function ChatPage() {
       </div>
     </div>
   );
+}
