@@ -39,17 +39,19 @@ const prompt = ai.definePrompt({
   Consider the existing chat history to provide context-aware responses.
 
   Chat History:
-  {{#each chatHistory}}
-    {{#if (eq role \"user\")}}
-      User: {{{content}}}
-    {{else}}
-      Assistant: {{{content}}}
-    {{/if}}
-  {{/each}}
+  {{#if chatHistory}}
+    {{#each chatHistory}}
+      {{#if (eq role "user")}}
+        User: {{{content}}}
+      {{else}}
+        Assistant: {{{content}}}
+      {{/if}}
+    {{/each}}
+  {{/if}}
 
   User Query: {{{userQuery}}}
 
-  Response:`, //The prompt is now formatted with Handlebars.
+  Response:`,
 });
 
 const chatbotAssistanceFlow = ai.defineFlow(
