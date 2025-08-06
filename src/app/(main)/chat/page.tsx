@@ -50,7 +50,7 @@ export default function ChatPage() {
 
       const assistanceInput: ChatbotAssistanceInput = {
         userQuery: input,
-        chatHistory: chatHistoryForApi,
+        chatHistory: chatHistoryForApi.length > 0 ? chatHistoryForApi : undefined,
       };
 
       const result = await chatbotAssistance(assistanceInput);
