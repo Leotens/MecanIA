@@ -5,33 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, Plus, Send, Upload, CheckCircle, AlertTriangle, MessageSquarePlus, Loader2 } from "lucide-react";
+import { Bot, Plus, Send, Upload, CheckCircle, AlertTriangle, MessageSquarePlus, Loader2, Circle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { chatbotAssistance, ChatbotAssistanceInput } from "@/ai/flows/chatbot-assistance";
+import { useToast } from "@/hooks/use-toast";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
+type ChatStatus = 'solved' | 'persistent';
+
+type SavedChat = {
+  id: string;
+  title: string;
+  status: ChatStatus | null;
+};
+
 const initialMessages: Message[] = [
   { role: "assistant", content: "Hola, soy Mecan IA. Describe el problema que estás experimentando con la maquinaria." },
 ];
-
-const relatedChats = [
-    {id: '1', title: 'Chat sobre ruido de motor'},
-    {id: '2', title: 'Problema con los frenos'},
-    {id: '3', title: 'Fallo de refrigeración'},
-]
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(() => `chat_${Date.now()}`);
+  const [savedChats, setSavedChats] = useState<SavedChat[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const handleSend = async () => {
     if (input.trim() === "") return;
@@ -39,17 +45,18 @@ export default function ChatPage() {
     const userMessage: Message = { role: "user", content: input };
     const newMessages: Message[] = [...messages, userMessage];
     setMessages(newMessages);
+    const currentInput = input;
     setInput("");
     setIsLoading(true);
 
     try {
-      const chatHistoryForApi = newMessages.slice(0, -1).map(msg => ({
+      const chatHistoryForApi = newMessages.slice(1, -1).map(msg => ({ // a partir del 1 para no mandar el mensaje inicial
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
       }));
 
       const assistanceInput: ChatbotAssistanceInput = {
-        userQuery: input,
+        userQuery: currentInput,
         chatHistory: chatHistoryForApi.length > 0 ? chatHistoryForApi : undefined,
       };
 
@@ -69,10 +76,34 @@ export default function ChatPage() {
       setIsLoading(false);
     }
   };
+  
+  const updateChatStatus = (status: ChatStatus) => {
+    if (!currentChatId) return;
+
+    const chatTitle = messages.find(m => m.role === 'user')?.content.substring(0, 30) + '...' || 'Nuevo Chat';
+    
+    setSavedChats(prev => {
+        const existingChat = prev.find(c => c.id === currentChatId);
+        if (existingChat) {
+            return prev.map(c => c.id === currentChatId ? { ...c, status } : c);
+        } else {
+            return [...prev, { id: currentChatId, title: chatTitle, status }];
+        }
+    });
+
+    toast({
+      title: "Estado actualizado",
+      description: `El chat se ha marcado como ${status === 'solved' ? 'solucionado' : 'persistente'}.`,
+    });
+  };
+
+  const startNewChat = () => {
+    setMessages(initialMessages);
+    setCurrentChatId(`chat_${Date.now()}`);
+  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-        // A bit of a hack to scroll to the bottom.
         setTimeout(() => {
             const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
             if (viewport) {
@@ -84,29 +115,38 @@ export default function ChatPage() {
 
   return (
     <div className="grid lg:grid-cols-12 gap-6 h-[calc(100vh-10rem)]">
-      {/* Left Sidebar */}
       <div className="lg:col-span-3 lg:block hidden">
         <Card className="h-full flex flex-col">
           <CardHeader>
-            <CardTitle>Ayuda de Mantenimiento</CardTitle>
+            <CardTitle>Acciones del Chat</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={() => updateChatStatus('solved')} className="w-full bg-green-600 hover:bg-green-700 text-white">
               <CheckCircle className="mr-2 h-4 w-4" /> Marcar como solucionado
             </Button>
-            <Button variant="destructive" className="w-full">
+            <Button onClick={() => updateChatStatus('persistent')} variant="destructive" className="w-full">
               <AlertTriangle className="mr-2 h-4 w-4" /> Marcar como persistente
             </Button>
             <Separator className="my-6" />
-            <h3 className="font-semibold text-base">Maquinaria Relacionada</h3>
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>Motor de coche, cojinetes</p>
-            </div>
+            <h3 className="font-semibold text-base">Chats Guardados</h3>
+            <ScrollArea className="h-48">
+              <div className="space-y-2">
+                {savedChats.map(chat => (
+                  <div key={chat.id} className="flex items-center text-sm p-2 rounded-md hover:bg-secondary/80">
+                    {chat.status === 'solved' && <Circle className="mr-2 h-3 w-3 text-green-500 fill-green-500" />}
+                    {chat.status === 'persistent' && <Circle className="mr-2 h-3 w-3 text-red-500 fill-red-500" />}
+                    <span className="flex-1 truncate">{chat.title}</span>
+                  </div>
+                ))}
+                {savedChats.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No hay chats guardados.</p>
+                )}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Chat Area */}
       <div className="lg:col-span-6 flex flex-col h-full">
         <Card className="flex-1 flex flex-col">
           <CardHeader>
@@ -178,7 +218,6 @@ export default function ChatPage() {
         </Card>
       </div>
 
-      {/* Right Sidebar */}
       <div className="lg:col-span-3 lg:block hidden">
         <Card className="h-full flex flex-col">
           <CardHeader>
@@ -187,19 +226,11 @@ export default function ChatPage() {
             </Button>
           </CardHeader>
           <CardContent className="flex-1 space-y-2 overflow-hidden">
-             <h3 className="font-semibold text-sm mb-2">Acceso Rápido</h3>
-             <ScrollArea className="h-[calc(100%-8rem)]">
-                <div className="space-y-2">
-                {relatedChats.map(chat => (
-                    <Button key={chat.id} variant="ghost" className="w-full justify-start text-muted-foreground" asChild>
-                        <Link href={`/problemas/${chat.id}`}>{chat.title}</Link>
-                    </Button>
-                ))}
-                </div>
-             </ScrollArea>
+             <h3 className="font-semibold text-sm mb-2">Maquinaria Relacionada</h3>
+             <p className="text-sm text-muted-foreground">Motor, cojinetes</p>
           </CardContent>
           <div className="p-4 mt-auto border-t">
-              <Button variant="secondary" className="w-full">
+              <Button onClick={startNewChat} variant="secondary" className="w-full">
                   <MessageSquarePlus className="mr-2 h-4 w-4" /> Nuevo Chat
               </Button>
           </div>

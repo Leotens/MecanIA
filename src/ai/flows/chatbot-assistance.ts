@@ -38,20 +38,16 @@ const prompt = ai.definePrompt({
   Your role is to provide guidance and advice to maintenance technicians to help them troubleshoot industrial machines.
   Consider the existing chat history to provide context-aware responses.
 
-  Chat History:
   {{#if chatHistory}}
-    {{#each chatHistory}}
-      {{#if (eq role "user")}}
-        User: {{{content}}}
-      {{else}}
-        Assistant: {{{content}}}
-      {{/if}}
-    {{/each}}
+  Chat History:
+  {{#each chatHistory}}
+  {{role}}: {{content}}
+  {{/each}}
   {{/if}}
 
-  User Query: {{{userQuery}}}
+  User: {{{userQuery}}}
 
-  Response:`,
+  Assistant:`,
 });
 
 const chatbotAssistanceFlow = ai.defineFlow(
