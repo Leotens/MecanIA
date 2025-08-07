@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 type User = {
   username: string;
   email: string;
+  password?: string;
 };
 
 type AuthContextType = {
@@ -22,6 +23,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
+    // Seed a default user for easy login
+    const savedUsers = localStorage.getItem("users");
+    let users = savedUsers ? JSON.parse(savedUsers) : [];
+    const testUserEmail = "prueba@mecan.ia.pe";
+    const userExists = users.some((user: any) => user.email === testUserEmail);
+
+    if (!userExists) {
+        users.push({ 
+            username: "Usuario de Prueba", 
+            email: testUserEmail, 
+            password: "123" 
+        });
+        localStorage.setItem("users", JSON.stringify(users));
+    }
+
     // Check if bypass mode is active
     if (process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') {
       setUser({ username: 'Test User', email: 'test@example.com' });
