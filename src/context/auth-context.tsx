@@ -38,13 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("users", JSON.stringify(users));
     }
 
-    // Check if bypass mode is active
-    if (process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') {
-      setUser({ username: 'Test User', email: 'test@example.com' });
-      setLoading(false);
-      return;
-    }
-
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -53,13 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (userData: User) => {
-    if (process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') return;
     localStorage.setItem('currentUser', JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    if (process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true') return;
     localStorage.removeItem('currentUser');
     setUser(null);
   };

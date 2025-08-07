@@ -29,11 +29,16 @@ export function UserNav() {
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "";
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
   if (!user) {
-    return null;
+    return (
+      <Button asChild>
+        <Link href="/login">Iniciar Sesión</Link>
+      </Button>
+    )
   }
 
   return (

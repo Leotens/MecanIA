@@ -6,31 +6,12 @@ import { UserNav } from "@/components/user-nav";
 import { MainNav } from "@/components/main-nav";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/auth-context";
-import { useRouter } from 'next/navigation';
-import { useEffect } from "react";
 
 export default function MainLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  if (loading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div>Cargando...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen w-full flex-col">

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/auth-context";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type UserProfile = {
@@ -16,10 +17,15 @@ type UserProfile = {
 };
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+
     if (user) {
       setUserProfile({
         username: user.username,
@@ -30,9 +36,9 @@ export default function ProfilePage() {
         lastActivity: new Date().toISOString().split('T')[0],
       });
     }
-  }, [user]);
+  }, [user, loading, router]);
 
-  if (!userProfile) {
+  if (loading || !userProfile) {
     return <div>Cargando perfil...</div>;
   }
 
