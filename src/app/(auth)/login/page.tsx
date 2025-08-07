@@ -20,8 +20,8 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically handle authentication
-    // For now, we'll just redirect to the dashboard
-    router.push('/dashboard');
+    // For now, we'll just redirect to the main page
+    router.push('/');
   };
 
   return (
@@ -56,5 +56,3 @@ export default function LoginPage() {
     </Card>
   );
 }
-
-    

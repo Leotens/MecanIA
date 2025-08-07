@@ -20,8 +20,8 @@ export default function RegisterPage() {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically handle user registration
-    // For now, we'll just redirect to the dashboard
-    router.push('/dashboard');
+    // For now, we'll just redirect to the main page
+    router.push('/');
   };
 
   return (
@@ -60,5 +60,3 @@ export default function RegisterPage() {
     </Card>
   );
 }
-
-    
