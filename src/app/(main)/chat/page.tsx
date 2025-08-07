@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, Plus, Send, Upload, CheckCircle, AlertTriangle, MessageSquarePlus, Loader2, Circle, Edit } from "lucide-react";
+import { Bot, Plus, Send, Upload, CheckCircle, AlertTriangle, MessageSquarePlus, Loader2, Circle, Edit, ListChecks } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -27,14 +27,15 @@ type Message = {
   content: string;
 };
 
-type ChatStatus = 'solved' | 'persistent';
+type ChatStatus = 'solved' | 'persistent' | 'pending';
 
 type Chat = {
   id: string;
   title: string;
-  status: ChatStatus | null;
+  status: ChatStatus;
   messages: Message[];
   relatedMachinery: string;
+  lastReport: string;
 };
 
 const initialMessages: Message[] = [
@@ -57,14 +58,25 @@ export default function ChatPage() {
     const savedChats = localStorage.getItem("savedChats");
     const savedCurrentChatId = localStorage.getItem("currentChatId");
 
+    let parsedChats: Chat[] = [];
     if (savedChats) {
-      setChats(JSON.parse(savedChats));
+      try {
+        parsedChats = JSON.parse(savedChats);
+        setChats(parsedChats);
+      } catch (error) {
+        console.error("Error parsing saved chats:", error);
+      }
     }
 
-    if (savedCurrentChatId) {
-      setCurrentChatId(JSON.parse(savedCurrentChatId));
+    if (savedCurrentChatId && savedCurrentChatId !== 'null') {
+      const currentId = JSON.parse(savedCurrentChatId);
+      if (parsedChats.some(chat => chat.id === currentId)) {
+        setCurrentChatId(currentId);
+      } else {
+        startNewChat(parsedChats);
+      }
     } else {
-      startNewChat();
+      startNewChat(parsedChats);
     }
   }, []);
 
@@ -80,11 +92,19 @@ export default function ChatPage() {
   const currentChat = chats.find(chat => chat.id === currentChatId);
 
   const handleSend = async () => {
-    if (input.trim() === "" || !currentChat) return;
+    if (input.trim() === "" || !currentChatId) return;
+    const currentChat = chats.find(chat => chat.id === currentChatId);
+    if (!currentChat) return;
 
     const userMessage: Message = { role: "user", content: input };
     const updatedMessages = [...currentChat.messages, userMessage];
-    updateChat(currentChatId, { messages: updatedMessages });
+    
+    let chatToUpdate: Partial<Chat> = { messages: updatedMessages };
+
+    if (currentChat.messages.length <= 1) { 
+        chatToUpdate.title = input.substring(0, 30) + (input.length > 30 ? "..." : "");
+    }
+    updateChat(currentChatId, chatToUpdate);
 
     const currentInput = input;
     setInput("");
@@ -117,11 +137,11 @@ export default function ChatPage() {
   
   const updateChat = (chatId: string, updates: Partial<Chat>) => {
     setChats(prevChats => prevChats.map(chat =>
-      chat.id === chatId ? { ...chat, ...updates } : chat
+      chat.id === chatId ? { ...chat, ...updates, lastReport: new Date().toISOString().split('T')[0] } : chat
     ));
   };
   
-  const updateChatStatus = (status: ChatStatus) => {
+  const updateChatStatus = (status: Omit<ChatStatus, 'pending'>) => {
     if (!currentChatId) return;
     updateChat(currentChatId, { status });
     toast({
@@ -130,16 +150,17 @@ export default function ChatPage() {
     });
   };
 
-  const startNewChat = () => {
+  const startNewChat = (existingChats?: Chat[]) => {
     const newChatId = `chat_${Date.now()}`;
     const newChat: Chat = {
       id: newChatId,
-      title: "Nuevo Chat",
+      title: "Nuevo Diagnóstico",
       messages: initialMessages,
-      status: null,
-      relatedMachinery: "Motor, cojinetes"
+      status: 'pending',
+      relatedMachinery: "Sin especificar",
+      lastReport: new Date().toISOString().split('T')[0],
     };
-    setChats(prev => [...prev, newChat]);
+    setChats(prev => [...(existingChats || prev), newChat]);
     setCurrentChatId(newChatId);
   };
 
@@ -170,7 +191,7 @@ export default function ChatPage() {
             }
         }, 100);
     }
-  }, [currentChat?.messages]);
+  }, [currentChat?.messages, isLoading]);
 
   return (
     <>
@@ -180,7 +201,7 @@ export default function ChatPage() {
             <CardHeader>
               <CardTitle>Acciones del Chat</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex-1 flex flex-col">
               <Button onClick={() => updateChatStatus('solved')} className="w-full bg-green-600 hover:bg-green-700 text-white" disabled={!currentChatId}>
                 <CheckCircle className="mr-2 h-4 w-4" /> Marcar como solucionado
               </Button>
@@ -188,8 +209,8 @@ export default function ChatPage() {
                 <AlertTriangle className="mr-2 h-4 w-4" /> Marcar como persistente
               </Button>
               <Separator className="my-6" />
-              <h3 className="font-semibold text-base">Chats Guardados</h3>
-              <ScrollArea className="h-48">
+              <h3 className="font-semibold text-base mb-2">Problemas Recientes</h3>
+              <ScrollArea className="flex-1">
                 <div className="space-y-2">
                   {chats.map(chat => (
                     <div key={chat.id} 
@@ -198,7 +219,7 @@ export default function ChatPage() {
                     >
                       {chat.status === 'solved' && <Circle className="mr-2 h-3 w-3 text-green-500 fill-green-500" />}
                       {chat.status === 'persistent' && <Circle className="mr-2 h-3 w-3 text-red-500 fill-red-500" />}
-                      {!chat.status && <Circle className="mr-2 h-3 w-3 text-muted-foreground fill-muted-foreground" />}
+                      {chat.status === 'pending' && <Circle className="mr-2 h-3 w-3 text-muted-foreground fill-muted-foreground" />}
                       <span className="flex-1 truncate">{chat.title}</span>
                     </div>
                   ))}
@@ -208,6 +229,11 @@ export default function ChatPage() {
                 </div>
               </ScrollArea>
             </CardContent>
+            <div className="p-4 mt-auto border-t">
+                <Button onClick={()=> startNewChat()} variant="secondary" className="w-full">
+                    <MessageSquarePlus className="mr-2 h-4 w-4" /> Nuevo Diagnóstico
+                </Button>
+            </div>
           </Card>
         </div>
 
@@ -303,11 +329,6 @@ export default function ChatPage() {
               </div>
               <p className="text-sm text-muted-foreground">{currentChat?.relatedMachinery || "No seleccionada"}</p>
             </CardContent>
-            <div className="p-4 mt-auto border-t">
-                <Button onClick={startNewChat} variant="secondary" className="w-full">
-                    <MessageSquarePlus className="mr-2 h-4 w-4" /> Nuevo Chat
-                </Button>
-            </div>
           </Card>
         </div>
       </div>
@@ -358,3 +379,5 @@ export default function ChatPage() {
     </>
   );
 }
+
+    

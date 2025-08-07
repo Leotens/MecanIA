@@ -1,19 +1,62 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Circle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-const recentProblems = [
-  { id: '1', name: "Ruido en motor", status: "Pendiente", lastReport: "2024-07-21" },
-  { id: '2', name: "Fallo en sistema de frenos", status: "Solucionado", lastReport: "2024-07-20" },
-  { id: '3', name: "Sobrecalentamiento", status: "Pendiente", lastReport: "2024-07-19" },
-  { id: '4', name: "Vibración excesiva", status: "Solucionado", lastReport: "2024-07-18" },
-  { id: '5', name: "Pérdida de potencia", status: "Pendiente", lastReport: "2024-07-22" },
-];
+type ChatStatus = 'solved' | 'persistent' | 'pending';
+
+type Chat = {
+  id: string;
+  title: string;
+  status: ChatStatus;
+  lastReport: string;
+};
 
 export default function Dashboard() {
+  const [recentProblems, setRecentProblems] = useState<Chat[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const savedChats = localStorage.getItem("savedChats");
+    if (savedChats) {
+      try {
+        const parsedChats: Chat[] = JSON.parse(savedChats);
+        setRecentProblems(parsedChats);
+      } catch (error) {
+        console.error("Error parsing saved chats:", error);
+      }
+    }
+  }, []);
+
+  const handleNavigateToChat = (chatId: string) => {
+    localStorage.setItem("currentChatId", JSON.stringify(chatId));
+    router.push('/chat');
+  };
+  
+  const getBadgeVariant = (status: ChatStatus) => {
+    switch(status) {
+      case 'solved': return 'secondary';
+      case 'persistent': return 'destructive';
+      case 'pending': return 'default';
+      default: return 'outline';
+    }
+  }
+
+  const getStatusText = (status: ChatStatus) => {
+    switch(status) {
+      case 'solved': return 'Solucionado';
+      case 'persistent': return 'Persistente';
+      case 'pending': return 'Pendiente';
+      default: return 'Desconocido';
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center py-12 md:py-16">
@@ -46,22 +89,28 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentProblems.map((problem) => (
+              {recentProblems.length > 0 ? recentProblems.map((problem) => (
                 <TableRow key={problem.id}>
-                  <TableCell className="font-medium">{problem.name}</TableCell>
+                  <TableCell className="font-medium">{problem.title}</TableCell>
                   <TableCell>
-                    <Badge variant={problem.status === "Solucionado" ? "secondary" : "default"}>
-                      {problem.status}
+                    <Badge variant={getBadgeVariant(problem.status)}>
+                      {getStatusText(problem.status)}
                     </Badge>
                   </TableCell>
                   <TableCell>{problem.lastReport}</TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/problemas/${problem.id}`}>Ver detalle</Link>
+                    <Button onClick={() => handleNavigateToChat(problem.id)} variant="outline" size="sm">
+                      Ver detalle
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    No hay problemas recientes.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -69,3 +118,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    
