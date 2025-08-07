@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 export function MainNav() {
   const pathname = usePathname();
   const routes = [
-    { href: "/", label: "Dashboard" },
+    { href: "/dashboard", label: "Dashboard" },
     { href: "/chat", label: "Iniciar Diagnóstico" },
   ];
 

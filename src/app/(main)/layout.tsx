@@ -15,7 +15,7 @@ export default function MainLayout({
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur px-4 md:px-6 z-50">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 lg:gap-6">
           <Link
-            href="/"
+            href="/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
             <Bot className="h-6 w-6 text-primary" />
@@ -38,13 +38,13 @@ export default function MainLayout({
           <SheetContent side="left">
             <nav className="grid gap-6 text-lg font-medium">
               <Link
-                href="/"
+                href="/dashboard"
                 className="flex items-center gap-2 text-lg font-semibold mb-4"
               >
                 <Bot className="h-6 w-6 text-primary" />
                 <span className="font-headline text-xl">Mecan IA</span>
               </Link>
-              <Link href="/" className="hover:text-foreground">
+              <Link href="/dashboard" className="hover:text-foreground">
                 Dashboard
               </Link>
               <Link href="/chat" className="text-muted-foreground hover:text-foreground">

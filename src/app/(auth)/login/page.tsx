@@ -21,7 +21,7 @@ export default function LoginPage() {
     e.preventDefault();
     // Here you would typically handle authentication
     // For now, we'll just redirect to the main page
-    router.push('/');
+    router.push('/dashboard');
   };
 
   return (

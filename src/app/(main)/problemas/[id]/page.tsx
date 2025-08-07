@@ -154,5 +154,3 @@ export default function ProblemDetailPage({ params }: { params: { id: string } }
     </div>
   );
 }
-
-    

@@ -21,7 +21,7 @@ export default function RegisterPage() {
     e.preventDefault();
     // Here you would typically handle user registration
     // For now, we'll just redirect to the main page
-    router.push('/');
+    router.push('/dashboard');
   };
 
   return (
