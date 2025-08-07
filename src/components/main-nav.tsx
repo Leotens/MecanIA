@@ -19,7 +19,7 @@ export function MainNav() {
           href={route.href}
           className={cn(
             "text-muted-foreground transition-colors hover:text-foreground",
-            (pathname === route.href) ? "text-foreground" : "text-muted-foreground"
+            (pathname.startsWith(route.href)) ? "text-foreground" : "text-muted-foreground"
           )}
         >
           {route.label}
