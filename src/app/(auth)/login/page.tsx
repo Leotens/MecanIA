@@ -15,12 +15,14 @@ import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/context/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login } = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ export default function LoginPage() {
       const users = JSON.parse(savedUsers);
       const user = users.find((u: any) => u.email === email && u.password === password);
       if (user) {
-        localStorage.setItem("currentUser", JSON.stringify(user));
+        login(user);
         toast({ title: "Inicio de sesión exitoso." });
         router.push('/dashboard');
       } else {

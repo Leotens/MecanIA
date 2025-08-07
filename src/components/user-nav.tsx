@@ -16,28 +16,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-type User = {
-  username: string;
-  email: string;
-};
+import { useAuth } from "@/context/auth-context";
 
 export function UserNav() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    const currentUserStr = localStorage.getItem('currentUser');
-    if (currentUserStr) {
-      setUser(JSON.parse(currentUserStr));
-    }
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    setUser(null);
+    logout();
     router.push('/login');
   };
 
