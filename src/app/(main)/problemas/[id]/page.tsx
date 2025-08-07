@@ -31,13 +31,14 @@ type Chat = {
 export default function ProblemDetailPage({ params }: { params: { id: string } }) {
   const [problem, setProblem] = useState<Chat | null>(null);
   const router = useRouter();
+  const { id } = params;
 
   useEffect(() => {
     const savedChats = localStorage.getItem("savedChats");
     if (savedChats) {
       try {
         const parsedChats: Chat[] = JSON.parse(savedChats);
-        const currentProblem = parsedChats.find(p => p.id === params.id);
+        const currentProblem = parsedChats.find(p => p.id === id);
         if (currentProblem) {
           // Simulate AI analysis if not present
           if (!currentProblem.aiAnalysis) {
@@ -51,10 +52,10 @@ export default function ProblemDetailPage({ params }: { params: { id: string } }
         console.error("Error loading problem details:", error);
       }
     }
-  }, [params.id]);
+  }, [id]);
 
   const handleNavigateToChat = () => {
-    localStorage.setItem("currentChatId", JSON.stringify(params.id));
+    localStorage.setItem("currentChatId", JSON.stringify(id));
     router.push('/chat');
   };
   
