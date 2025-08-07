@@ -13,15 +13,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically handle user registration
-    // For now, we'll just redirect to the main page
-    router.push('/dashboard');
+    const newUser = { username, email, password };
+    const savedUsers = localStorage.getItem("users");
+    const users = savedUsers ? JSON.parse(savedUsers) : [];
+    
+    const userExists = users.some((user: any) => user.email === email);
+
+    if (userExists) {
+        toast({ title: "Error de registro", description: "El correo electrónico ya está en uso.", variant: "destructive" });
+        return;
+    }
+
+    users.push(newUser);
+    localStorage.setItem("users", JSON.stringify(users));
+    
+    toast({ title: "Registro exitoso", description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión." });
+    router.push('/login');
   };
 
   return (
@@ -36,15 +56,15 @@ export default function RegisterPage() {
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="username">Nombre de Usuario</Label>
-            <Input id="username" type="text" placeholder="Tu nombre" required />
+            <Input id="username" type="text" placeholder="Tu nombre" required value={username} onChange={(e) => setUsername(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Correo Electrónico</Label>
-            <Input id="email" type="email" placeholder="nombre@ejemplo.com" required />
+            <Input id="email" type="email" placeholder="nombre@ejemplo.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input id="password" type="password" required />
+            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col">
