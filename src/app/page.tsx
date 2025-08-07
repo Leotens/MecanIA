@@ -3,16 +3,15 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+// For this prototype, we'll assume the user is "logged in"
+// and we can show them the main dashboard.
+// In a real app, you'd have auth checks here.
 export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to the login page
     router.replace('/login');
   }, [router]);
 
-  // You can show a loading spinner here if you want
-  return null;
+  return null; 
 }
-
-    
