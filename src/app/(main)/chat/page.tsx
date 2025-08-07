@@ -95,37 +95,39 @@ export default function ChatPage() {
     if (input.trim() === "" || !currentChatId) return;
     const currentChat = chats.find(chat => chat.id === currentChatId);
     if (!currentChat) return;
-
+  
     const userMessage: Message = { role: "user", content: input };
     const updatedMessages = [...currentChat.messages, userMessage];
     
     let chatToUpdate: Partial<Chat> = { messages: updatedMessages };
-
+  
     if (currentChat.messages.length <= 1) { 
         chatToUpdate.title = input.substring(0, 30) + (input.length > 30 ? "..." : "");
     }
     updateChat(currentChatId, chatToUpdate);
-
+  
     const currentInput = input;
     setInput("");
     setIsLoading(true);
-
+  
     try {
-      const chatHistoryForApi = updatedMessages.slice(1, -1).map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      }));
-
+      const chatHistoryForApi = currentChat.messages
+        .slice(1) // Remove initial assistant message
+        .map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        }));
+  
       const assistanceInput: ChatbotAssistanceInput = {
         userQuery: currentInput,
         chatHistory: chatHistoryForApi.length > 0 ? chatHistoryForApi : undefined,
       };
-
+  
       const result = await chatbotAssistance(assistanceInput);
       
       const assistantMessage: Message = { role: "assistant", content: result.response };
       updateChat(currentChatId, { messages: [...updatedMessages, assistantMessage] });
-
+  
     } catch (error) {
       console.error("Error fetching AI response:", error);
       const errorMessage: Message = { role: "assistant", content: "Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo." };
@@ -379,5 +381,3 @@ export default function ChatPage() {
     </>
   );
 }
-
-    
